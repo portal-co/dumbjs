@@ -2,8 +2,11 @@
   "name": "dumbjs",
   "version": "1.5.0",
   "description": "",
-  "main": "lib/index.coffee",
+  "source": "lib/index.coffee",
+  "main": "dist.js",
+  "module": "dist.esm.js",
   "scripts": {
+    "build": "sh ./build.sh",
     "test": "mocha --compilers coffee:coffee-script/register"
   },
   "author": "",
@@ -25,6 +28,11 @@
     "underscore": "^1.8.3"
   },
   "devDependencies": {
-    "mocha": "^11.7.1"
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "esbuild": "^0.25.5",
+    "esbuild-coffeescript": "^2.2.0",
+    "esbuild-node-externals": "^1.18.0",
+    "mocha": "^11.7.1",
+    "rollup": "^4.44.1"
   }
 }
