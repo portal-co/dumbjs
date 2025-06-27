@@ -1,10 +1,9 @@
 {
-  "name": "dumbjs",
+  "name": "@portal-solutions/dumbjs",
   "version": "1.5.0",
   "description": "",
   "source": "lib/index.coffee",
   "main": "dist.js",
-  "module": "dist.esm.js",
   "scripts": {
     "build": "sh ./build.sh",
     "test": "mocha --compilers coffee:coffee-script/register"
