@@ -215,9 +215,16 @@ _declosurify = (programNode, opt = {}) ->
       return node
     leave: (node, parent) ->
       if util.isFunction(node)
+        node.stmts.unhift(util.declaration('$arguments_cache',util.argumentsCache()))
         escope_scope_stack.pop()
         scope_stack.pop()
         return
+
+      if this_function_takes_closure()
+        if node.type in ['Identifier'] && node.name == "arguments"
+          node.name = '$arguments_cache'
+          return node
+          
 
       if node.type in ['Identifier'] &&
           should_turn_ident_into_member_expression(node, parent)

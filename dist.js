@@ -624,6 +624,7 @@ var require_ast_builders = __commonJS({
       ensure = enable ? util.ensure : (_, x) => x;
     };
     util.enableTestMode(false);
+    util.argumentsCache = () => esprima.parseScript(`[].slice.call(arguments,1);`).body[0].expression;
     util.functionExpression = ({
       body,
       bodyExpr,
@@ -1569,22 +1570,29 @@ var require_declosurify = __commonJS({
             return node;
           },
           leave: function(node, parent) {
-            var assign_or_declare, bod, extract_var_decls, funct, j2, k2, len2, len12, name, param, ref12, ref2, ref3;
+            var assign_or_declare, bod, extract_var_decls, funct, j2, k2, len2, len12, name, param, ref12, ref2, ref3, ref4;
             if (util.isFunction(node)) {
+              node.stmts.unhift(util.declaration("$arguments_cache", util.argumentsCache()));
               escope_scope_stack.pop();
               scope_stack.pop();
               return;
             }
-            if ((ref12 = node.type) === "Identifier" && should_turn_ident_into_member_expression(node, parent)) {
+            if (this_function_takes_closure()) {
+              if ((ref12 = node.type) === "Identifier" && node.name === "arguments") {
+                node.name = "$arguments_cache";
+                return node;
+              }
+            }
+            if ((ref2 = node.type) === "Identifier" && should_turn_ident_into_member_expression(node, parent)) {
               return ident_to_member_expr(node);
             }
             if (util.isBlockish(node) && this_function_passes_closure()) {
               bod = [];
               if (util.isFunction(parent)) {
                 if (opt.params !== false) {
-                  ref2 = parent.params;
-                  for (j2 = 0, len2 = ref2.length; j2 < len2; j2++) {
-                    param = ref2[j2];
+                  ref3 = parent.params;
+                  for (j2 = 0, len2 = ref3.length; j2 < len2; j2++) {
+                    param = ref3[j2];
                     if (scope_below_using(escope_scope(), param.name)) {
                       if (param.name !== "_closure") {
                         bod.push(assignment(util.member(scope_with(param.name).name, param.name), param));
@@ -1593,11 +1601,11 @@ var require_declosurify = __commonJS({
                   }
                 }
                 if (opt.fname !== false) {
-                  ref3 = functions_declared(parent, {
+                  ref4 = functions_declared(parent, {
                     nodes: true
                   });
-                  for (k2 = 0, len12 = ref3.length; k2 < len12; k2++) {
-                    [funct, name] = ref3[k2];
+                  for (k2 = 0, len12 = ref4.length; k2 < len12; k2++) {
+                    [funct, name] = ref4[k2];
                     bod.push(assignment(util.member(current_scope().name, name), name));
                   }
                 }
@@ -1611,11 +1619,11 @@ var require_declosurify = __commonJS({
                 }
               };
               extract_var_decls = function(_node) {
-                var decl, declosurified, fName, ref4;
+                var decl, declosurified, fName, ref5;
                 if (_node.type === "VariableDeclaration") {
                   declosurified = [];
                   decl = _node.declarations[0];
-                  if (((ref4 = decl.init) != null ? ref4.type : void 0) !== "FunctionExpression") {
+                  if (((ref5 = decl.init) != null ? ref5.type : void 0) !== "FunctionExpression") {
                     return assign_or_declare(decl.id, decl.init);
                   } else if (decl.init) {
                     if (decl.id.type === "MemberExpression") {
