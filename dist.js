@@ -1746,6 +1746,10 @@ var require_bindify = __commonJS({
         }
       });
     };
+    module2.exports.name = function(options) {
+      var bindFunctionName = options && options.bindFunctionName || "BIND";
+      return bindFunctionName;
+    };
     function funcNeedsBind(program, funcName) {
       var firstParam = funcByName(program, funcName).params[0];
       return firstParam && firstParam.name === "_closure";
@@ -1817,11 +1821,15 @@ var require_thatter = __commonJS({
           }
         }
       });
-      if (usesThis) {
-        ast.params.unshift(util.identifier("_self"));
-        var functionNode = ast;
-        out = out.concat([functionNode]);
-      }
+      estraverse.replace(ast, {
+        enter: function(node) {
+          if (node.type === "Identifier" && node.name === "arguments") return util.identifier("$arguments_cache2");
+        }
+      });
+      ast.params.unshift(util.identifier("_self"));
+      ast.stmts.unshift(util.declaration("$arguments_cache2", util.argumentsCache()));
+      var functionNode = ast;
+      out = out.concat([functionNode]);
       return out;
     }
     function replaceCalls(ast, toReplace) {
@@ -1860,6 +1868,11 @@ var require_thatter = __commonJS({
                   [node.callee.object].concat(node.arguments)
                 );
               }
+            } else if (node.type === "CallExpression") {
+              return util.call(
+                deepClone(node.callee),
+                [util.identifier("undefined")].concat(node.arguments)
+              );
             }
           }
         });
@@ -2042,10 +2055,10 @@ var require_ownfunction = __commonJS({
     var isValid;
     ast = basicTransforms(ast);
     if (opt.requireObliteratinator !== false) {
-      ast = requireObliteratinator(ast, {
+      ast = requireObliteratinator(ast, Object.assign(Object.create(opt.obliterinatorOpts || {}), {
         filename: opt.filename || "",
         transformRequiredModule: basicTransforms
-      });
+      }));
       clean_ast(ast);
     }
     if (opt.deregexenise !== false) {
@@ -2089,16 +2102,22 @@ var require_ownfunction = __commonJS({
     return ast;
   };
   dumbify = function(js, opt = {}) {
-    var ast, mayContainRequire;
+    var ast, bind, mayContainRequire, text;
     mayContainRequire = /require\s*?\(/m.test(js);
     ast = parse(js, opt.filename);
     if (mayContainRequire === false) {
       opt.requireObliteratinator = false;
     }
     ast = dumbifyAST(ast, opt);
-    return escodegen.generate(ast, {
+    text = escodegen.generate(ast, {
       comment: true
     });
+    if (opt.esmCompat === true) {
+      bind = bindify.name(opt);
+      text = `import {BIND as ${bind},JS_ADD} from "special:dumbjs"
+` + text;
+    }
+    return text;
   };
   module.exports = dumbify;
   module.exports.dumbify = dumbify;

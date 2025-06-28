@@ -31,10 +31,10 @@ clean_ast = (ast) ->
 dumbifyAST = (ast, opt = {}) ->
   ast = basicTransforms ast
   if opt.requireObliteratinator isnt false
-    ast = requireObliteratinator ast, {
+    ast = requireObliteratinator ast, Object.assign(Object.create(opt.obliterinatorOpts || {}),{
       filename: opt.filename or '',
       transformRequiredModule: basicTransforms
-    }
+    })
     clean_ast ast
   if opt.deregexenise isnt false
     ast = deregexenise ast
@@ -73,7 +73,11 @@ dumbify = (js, opt = {}) ->
   if mayContainRequire is false
     opt.requireObliteratinator = false
   ast = dumbifyAST ast, opt
-  return escodegen.generate ast, { comment: true }
+  text = escodegen.generate ast, { comment: true }
+  if opt.esmCompat is true
+    bind = bindify.name(opt)
+    text = "import {BIND as #{bind},JS_ADD} from \"special:dumbjs\"\n" + text
+  return text
 
 module.exports = dumbify
 module.exports.dumbify = dumbify
