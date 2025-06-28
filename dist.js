@@ -2115,7 +2115,13 @@ var require_ownfunction = __commonJS({
     if (opt.esmCompat === true) {
       bind = bindify.name(opt);
       text = `import {BIND as ${bind},JS_ADD} from "special:dumbjs"
-` + text;
+` + ast.body.map(function(ast2) {
+        return escodegen.generate(ast2, {
+          comment: true
+        });
+      }).map(code(function() {
+        return `export ${code}`;
+      })).join("\n");
     }
     return text;
   };

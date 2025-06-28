@@ -76,7 +76,7 @@ dumbify = (js, opt = {}) ->
   text = escodegen.generate ast, { comment: true }
   if opt.esmCompat is true
     bind = bindify.name(opt)
-    text = "import {BIND as #{bind},JS_ADD} from \"special:dumbjs\"\n" + text
+    text = "import {BIND as #{bind},JS_ADD} from \"special:dumbjs\"\n" + ast.body.map((ast) -> escodegen.generate ast, { comment: true }).map(code -> "export #{code}").join("\n")
   return text
 
 module.exports = dumbify
